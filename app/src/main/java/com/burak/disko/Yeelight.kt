@@ -5,7 +5,11 @@ import android.net.wifi.WifiManager
 import java.io.OutputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.NetworkInterface
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -141,9 +145,43 @@ object YeelightDiscovery {
                     re.find(text)?.let { found.add(it.groupValues[1]) }
                 }
             }
+        } catch (_: Exception) {
         } finally {
             lock.release()
         }
+        if (found.isEmpty()) found.addAll(scanSubnet())
         return found.toList()
+    }
+
+    /** Modem multicast'i engelliyorsa: yerel /24 ağda 55443 portu açık cihazları tara. */
+    fun scanSubnet(): List<String> {
+        val prefixes = LinkedHashSet<String>()
+        val ifs = try { NetworkInterface.getNetworkInterfaces() } catch (_: Exception) { null }
+            ?: return emptyList()
+        for (ni in ifs) {
+            if (!ni.isUp || ni.isLoopback) continue
+            for (a in ni.inetAddresses) {
+                if (a is Inet4Address && a.isSiteLocalAddress) {
+                    prefixes.add(a.hostAddress.substringBeforeLast('.'))
+                }
+            }
+        }
+        val found = java.util.Collections.synchronizedList(ArrayList<String>())
+        val pool = Executors.newFixedThreadPool(64)
+        for (p in prefixes) for (i in 1..254) {
+            val host = "$p.$i"
+            pool.execute {
+                try {
+                    Socket().use { s ->
+                        s.connect(InetSocketAddress(host, YeelightClient.PORT), 400)
+                        found.add(host)
+                    }
+                } catch (_: Exception) {
+                }
+            }
+        }
+        pool.shutdown()
+        pool.awaitTermination(15, TimeUnit.SECONDS)
+        return found.sorted()
     }
 }
