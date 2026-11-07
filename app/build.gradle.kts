@@ -15,6 +15,16 @@ android {
         versionName = "1.0"
     }
 
+    // Sabit imza: her derleme aynı anahtarla imzalanır, güncellemeler eskisinin üstüne kurulur
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("disko.keystore")
+            storePassword = "disko123"
+            keyAlias = "disko"
+            keyPassword = "disko123"
+        }
+    }
+
     buildTypes {
         release { isMinifyEnabled = false }
     }
