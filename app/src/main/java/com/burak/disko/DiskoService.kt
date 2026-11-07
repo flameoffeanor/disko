@@ -181,7 +181,8 @@ class DiskoService : Service() {
             try {
                 bulb?.setColor(rgb, bi, TRANSITION_MS)
             } catch (e: Exception) {
-                reconnect()
+                // Otomatik yeniden bağlanma yok: başka cihaz (PC) devraldıysa onunla kavga etmeyelim
+                fail("Ampul bağlantısı kesildi — başka cihaz devralmış olabilir. Tekrar için Başlat.")
                 return
             }
             sR = cR; sG = cG; sB = cB; sBright = bi

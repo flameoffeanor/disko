@@ -334,13 +334,11 @@ class Engine(threading.Thread):
                         try:
                             bulb.set_color(out, bi, TRANSITION_MS)
                         except OSError:
-                            self.on_status("Bağlantı koptu, yeniden bağlanıyor…")
+                            # Yeniden bağlanma yok: başka cihaz (TV) devraldıysa kavga etmeyelim
                             bulb.close()
-                            bulb = Yeelight(self.ip)
-                            bulb.connect()
-                            sent_b = -100
-                            self.on_status(f"Çalışıyor — {self.ip}")
-                            continue
+                            grab.close()
+                            self.on_status("Ampul bağlantısı kesildi — başka cihaz devralmış olabilir. Tekrar için Başlat.")
+                            return
                         sent = list(c)
                         sent_b = bi
                         last_send = now
