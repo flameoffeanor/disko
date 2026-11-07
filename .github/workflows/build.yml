@@ -2,6 +2,9 @@ name: Build APK
 
 on:
   push:
+    paths-ignore:
+      - "windows/**"
+      - ".github/workflows/build-windows.yml"
   workflow_dispatch:
 
 jobs:
