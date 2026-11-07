@@ -22,8 +22,9 @@ jobs:
 
       - name: Self test
         run: |
-          python -c "import dxcam, mss, numpy, tkinter; print('imports ok')"
+          python -c "import numpy, tkinter; print('imports ok')"
           python windows/disko.py --selftest
+          python windows/disko.py --grabtest
 
       - name: Build exe
         run: pyinstaller --onefile --noconsole --name Disko windows/disko.py
