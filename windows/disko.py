@@ -23,6 +23,7 @@ SEND_S = 0.11         # ampule en fazla ~9 güncelleme/sn
 TRANSITION_MS = 150
 ALPHA = 0.4           # yumuşatma
 WARM = (255, 170, 90)
+SUBTITLE_CUT = 0.25
 
 
 # ---------------------------------------------------------------- Yeelight
@@ -191,6 +192,8 @@ def _boost(rgb):
 
 def analyze(frame):
     """frame: HxWx3 uint8 RGB (küçültülmüş). -> (rgb | None, parlaklık 0..1)"""
+    # Alt %25 hesaba girmez: altyazılar (ör. sarı) ışığı boyamasın
+    frame = frame[: max(1, int(frame.shape[0] * (1 - SUBTITLE_CUT)))]
     px = frame.reshape(-1, 3).astype(np.float32)
     r, g, b = px[:, 0], px[:, 1], px[:, 2]
     luma = float((0.2126 * r + 0.7152 * g + 0.0722 * b).mean() / 255.0)
@@ -453,8 +456,9 @@ class Engine(threading.Thread):
                     rgb, lum = analyze(frame)
                     if rgb is not None:
                         t = list(rgb)
-                    lvl = min(1.0, max(0.0, lum / 0.45))
-                    tb = 1 + (self.max_bright - 1) * (lvl ** 0.8)
+                    # Karanlık sahnede daha çok kararsın: 0.03 altı = en düşük, eğri üssü 1.3
+                    lvl = min(1.0, max(0.0, (lum - 0.03) / 0.42))
+                    tb = 1 + (self.max_bright - 1) * (lvl ** 1.3)
                     for i in range(3):
                         c[i] += (t[i] - c[i]) * ALPHA
                     cb += (tb - cb) * ALPHA
@@ -674,6 +678,10 @@ def selftest():
     f[:, :30] = (20, 60, 230)               # mavi baskın
     rgb, _ = analyze(f)
     assert rgb[2] == 255 and rgb[0] < 100, rgb
+    f[:, :] = (8, 8, 10)                    # karanlık sahne + altta sarı altyazı
+    f[46:50, 30:66] = (255, 230, 0)
+    rgb, _ = analyze(f)
+    assert rgb is None, rgb
     print("selftest ok")
 
 

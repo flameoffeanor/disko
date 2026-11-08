@@ -162,8 +162,9 @@ class DiskoService : Service() {
             tR = Color.red(it).toFloat(); tG = Color.green(it).toFloat(); tB = Color.blue(it).toFloat()
         }
         // Film karelerinin ortalama parlaklığı genelde 0.05–0.35 arası → 0.45'i tavan kabul et
-        val lvl = (res.brightness / 0.45f).coerceIn(0f, 1f)
-        val tBright = 1f + (maxBright - 1) * lvl.pow(0.8f)
+        // Karanlık sahnede daha çok kararsın: 0.03 altı = en düşük, eğri üssü 1.3
+        val lvl = ((res.brightness - 0.03f) / 0.42f).coerceIn(0f, 1f)
+        val tBright = 1f + (maxBright - 1) * lvl.pow(1.3f)
 
         cR += (tR - cR) * ALPHA
         cG += (tG - cG) * ALPHA

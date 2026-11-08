@@ -30,7 +30,9 @@ class ColorAnalyzer {
         var count = 0
         var nW = 0f; var nR = 0f; var nG = 0f; var nB = 0f
 
-        for (y in 0 until height) {
+        // Alt %25 hesaba girmez: altyazılar (ör. sarı) ışığı boyamasın
+        val yEnd = (height * (1f - SUBTITLE_CUT)).toInt().coerceAtLeast(1)
+        for (y in 0 until yEnd) {
             val row = y * rowStride
             for (x in 0 until width) {
                 val i = row + x * pixelStride
@@ -103,5 +105,6 @@ class ColorAnalyzer {
 
     companion object {
         val WARM = Color.rgb(255, 170, 90)
+        const val SUBTITLE_CUT = 0.25f
     }
 }
